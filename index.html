@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>SISTEMA SENTINELA - DATAVIRTUS</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background-color: #f0f2f5; padding: 20px; }
+        body::before { content: ""; position: fixed; top: 50%; left: 50%; width: 600px; height: 600px; margin: -300px 0 0 -300px; background: url('https://wikimedia.org') no-repeat center; background-size: contain; opacity: 0.05; z-index: -1; pointer-events: none; }
+        .confidencial { color: #d9534f; font-weight: bold; text-align: center; font-size: 1.2em; border: 2px solid #d9534f; padding: 10px; margin-bottom: 20px; text-transform: uppercase; }
+        .modulo { background: white; border: 1px solid #ccc; padding: 20px; margin-bottom: 15px; border-radius: 4px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        h2 { background: #003366; color: white; padding: 8px; margin: -20px -20px 20px -20px; font-size: 0.9rem; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #999; box-sizing: border-box; }
+        .dork-link { display: block; background: #eee; padding: 8px; margin: 5px 0; text-decoration: none; color: #003366; font-weight: bold; border-left: 5px solid #003366; }
+        button { cursor: pointer; padding: 10px; border: none; font-weight: bold; color: white; width: 100%; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="confidencial">SEGREDO DE JUSTIÇA - ACESSO RESTRITO</div>
+
+<div class="modulo">
+    <h2>01. IDENTIFICAÇÃO E QUALIFICAÇÃO (ALVO MESTRE)</h2>
+    <div class="grid">
+        <input type="text" id="nomeAlvo" placeholder="Nome Completo / Razão Social" oninput="updateLinks()">
+        <input type="text" id="cpfCnpj" placeholder="CPF ou CNPJ" oninput="updateLinks()">
+        <input type="text" placeholder="Capital Social / E-mails">
+        <select id="naturezaJuridica">
+            <option>Natureza Jurídica...</option>
+            <option>Privada</option><option>Pública</option><option>Mista</option><option>Consórcio</option><option>3º Setor</option>
+        </select>
+    </div>
+</div>
+
+<div class="modulo">
+    <h2>03. ANÁLISE CNAE vs REALIDADE (ALERTA PATRIMONIAL)</h2>
+    <div class="grid">
+        <input type="text" placeholder="CNAE Declarado">
+        <input type="text" placeholder="Realidade (Maps/OSINT)">
+    </div>
+    <textarea placeholder="Jurisprudência: Art. 50 CC - Confusão Patrimonial detectada?"></textarea>
+</div>
+
+<div class="modulo">
+    <h2>05. ATIVOS ESPECIAIS (CHA / ARRAIS / AERONAVES)</h2>
+    <div class="grid">
+        <input type="text" placeholder="Registro CHA / ARRAIS / PIER">
+        <input type="text" placeholder="Hangar / Garagem Náutica">
+    </div>
+    <textarea placeholder="Análise: Alvará + IPTU + Lucro Real + IRRF"></textarea>
+</div>
+
+<div class="modulo">
+    <h2>06. HUB OSINT (DORKS AUTOMATIZADAS)</h2>
+    <div id="links-osint"><i>Digite o nome do alvo para gerar as buscas...</i></div>
+</div>
+
+<div class="modulo">
+    <h2>07. TRIANGULAÇÃO E NUVEM (IMEI / CLOUD)</h2>
+    <div class="grid">
+        <input type="text" id="imei" placeholder="IMEI do Aparelho">
+        <input type="text" id="nuvem" placeholder="iCloud / Google Takeout">
+    </div>
+    <textarea placeholder="Instrução: Mandado judicial para extração de metadados e localização."></textarea>
+</div>
+
+<div class="modulo">
+    <h2>09. CADEIA DE CUSTÓDIA E PROVA DIGITAL</h2>
+    <label>Anexar Prova (Print, Áudio, Vídeo, Extrato PIX):</label>
+    <input type="file" id="arquivoProva" onchange="fazerUpload()">
+    <div id="resultadoCustodia" style="display:none; margin-top:10px; padding:10px; border:1px dashed #28a745; background:#f8fff8;">
+        <strong>✅ PROVA REGISTRADA</strong> | HASH SHA-256: <code id="hashExibido"></code>
+    </div>
+    <div class="grid">
+        <button onclick="salvarNoServidor()" style="background:#28a745;">SALVAR CASO (JSON)</button>
+        <button onclick="window.print()" style="background:#007bff;">GERAR PDF OFICIAL</button>
+    </div>
+</div>
+
+<script>
+function updateLinks() {
+    const nome = document.getElementById('nomeAlvo').value;
+    if(!nome) return;
+    const dorks = document.getElementById('links-osint');
+    dorks.innerHTML = `
+        <a class="dork-link" target="_blank" href="https://google.com{nome}%22+site:wikipedia.org">1. Wikipedia: ${nome}</a>
+        <a class="dork-link" target="_blank" href="https://google.com{nome}%22+site:tce.mg.gov.br">2. Dork TCE (Contratos/Extratos)</a>
+        <a class="dork-link" target="_blank" href="https://google.com{nome}%22+filetype:pdf+intext:sigilo">3. Documentos Sigilosos (PDF)</a>
+        <a class="dork-link" target="_blank" href="https://google.com{nome}%22+site:tre-br.org">4. Local de Votação (Fixação de Domicílio)</a>
+    `;
+}
+
+async function fazerUpload() {
+    const fileInput = document.getElementById('arquivoProva');
+    const formData = new FormData();
+    formData.append('arquivo', fileInput.files[0]);
+    const res = await fetch('/upload-prova', { method: 'POST', body: formData });
+    const data = await res.json();
+    document.getElementById('resultadoCustodia').style.display = 'block';
+    document.getElementById('hashExibido').innerText = data.hash_sha256;
+}
+
+async function salvarNoServidor() {
+    const dados = { 
+        nome: document.getElementById('nomeAlvo').value, 
+        cpf: document.getElementById('cpfCnpj').value, 
+        hash: document.getElementById('hashExibido').innerText,
+        data: new Date().toLocaleString()
+    };
+    const res = await fetch('/salvar-investigacao', { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify(dados) 
+    });
+    const data = await res.json();
+    alert("CUSTÓDIA LOCAL CONFIRMADA: " + data.arquivo);
+}
+</script>
+
+</body>
+</html>
